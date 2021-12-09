@@ -1,6 +1,7 @@
 /** Routes for Lunchly */
 
 const express = require("express");
+const db = require("./db");
 
 const Customer = require("./models/customer");
 const Reservation = require("./models/reservation");
@@ -13,6 +14,41 @@ router.get("/", async function(req, res, next) {
   try {
     const customers = await Customer.all();
     return res.render("customer_list.html", { customers });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** Homepage: show a list of the top 10 customers. */
+
+router.get('/best', async function(req, res, next) {
+  try {
+    const results = await Reservation.getBestCustomers();
+    
+    let customers = [];
+    for (let result of results) {
+      const customer = await Customer.get(result.customer_id);
+      customers.push(customer);
+    }
+
+    return res.render('best_customers.html', {customers});
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** Homepage: search for a customer by name. */
+
+router.get('/search', async function(req, res, next) {
+  try {
+    const { nameQuery } = req.query;
+    const nameArray = nameQuery.split(' ');
+
+    const customer = await Customer.getByName({ firstName: nameArray[0], lastName: nameArray[1] });
+
+    const reservations = await customer.getReservations();
+
+    return res.render('customer_detail.html', { customer, reservations });
   } catch (err) {
     return next(err);
   }
@@ -88,6 +124,7 @@ router.post("/:id/edit/", async function(req, res, next) {
     return next(err);
   }
 });
+
 
 /** Handle adding a new reservation. */
 

@@ -39,6 +39,19 @@ class Reservation {
     return results.rows.map(row => new Reservation(row));
   }
 
+  /** get the top customers by reservation count */
+
+  static async getBestCustomers() {
+    const results = await db.query(
+      `SELECT customer_id, COUNT(*) AS count FROM reservations
+          GROUP BY customer_id 
+          ORDER BY count DESC
+          LIMIT 10`
+    );
+
+    return results.rows;
+  }
+
   /** save this reservation  */
 
   async save() {
